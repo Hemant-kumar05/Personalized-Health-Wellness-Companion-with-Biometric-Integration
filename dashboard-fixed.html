@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health & Wellness Dashboard - FIXED</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Roboto', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .auth-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .auth-card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); max-width: 400px; width: 100%; }
+        .auth-header { text-align: center; margin-bottom: 30px; }
+        .auth-title { font-size: 28px; font-weight: 700; color: #333; margin-bottom: 8px; }
+        .auth-subtitle { color: #666; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        .form-input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
+        .form-input:focus { outline: none; border-color: #667eea; }
+        .form-button { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
+        .form-button:hover { transform: translateY(-1px); }
+        .form-button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .auth-switch { text-align: center; margin-top: 20px; color: #666; }
+        .auth-link { color: #667eea; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .auth-link:hover { text-decoration: underline; }
+        
+        /* Dashboard Styles */
+        .dashboard-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: white; color: #333; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .metric-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.2s; cursor: pointer; }
+        .metric-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        .metric-title { font-size: 14px; color: #666; margin-bottom: 8px; text-transform: uppercase; }
+        .metric-value { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .metric-unit { font-size: 16px; color: #666; }
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; margin-top: 12px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4CAF50, #45a049); border-radius: 4px; transition: width 0.3s; }
+        .real-time-indicator { display: inline-block; width: 8px; height: 8px; background: #4CAF50; border-radius: 50%; margin-left: 8px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .daily-progress-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 20px; }
+        .logout-btn { background: #ff4757; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .logout-btn:hover { background: #ff3742; }
+        
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { margin: 0; color: #333; font-size: 24px; }
+        .modal-close { background: #f44336; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px; }
+        .modal-text { color: #666; line-height: 1.6; white-space: pre-line; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, createContext, useContext } = React;
+
+        // Auth Context
+        const AuthContext = createContext();
+
+        function AuthProvider({ children }) {
+            const [user, setUser] = useState(null);
+            const [loading, setLoading] = useState(false);
+
+            const login = async (email, password) => {
+                setLoading(true);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                setUser({ id: 1, email, name: 'John Doe' });
+                setLoading(false);
+            };
+
+            const register = async (name, email, password) => {
+                setLoading(true);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                setUser({ id: 1, email, name });
+                setLoading(false);
+            };
+
+            const logout = () => {
+                setUser(null);
+            };
+
+            return (
+                <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+                    {children}
+                </AuthContext.Provider>
+            );
+        }
+
+        function useAuth() {
+            return useContext(AuthContext);
+        }
+
+        function LoginForm() {
+            const [isLogin, setIsLogin] = useState(true);
+            const [formData, setFormData] = useState({
+                name: '', email: '', password: '', confirmPassword: ''
+            });
+            const { login, register, loading } = useAuth();
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                if (isLogin) {
+                    await login(formData.email, formData.password);
+                } else {
+                    if (formData.password !== formData.confirmPassword) {
+                        alert('Passwords do not match!');
+                        return;
+                    }
+                    await register(formData.name, formData.email, formData.password);
+                }
+            };
+
+            const handleChange = (e) => {
+                setFormData({ ...formData, [e.target.name]: e.target.value });
+            };
+
+            return (
+                <div className="auth-container">
+                    <div className="auth-card">
+                        <div className="auth-header">
+                            <h1 className="auth-title">🏥 Health & Wellness</h1>
+                            <p className="auth-subtitle">
+                                {isLogin ? 'Sign in to your account' : 'Create your account'}
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit}>
+                            {!isLogin && (
+                                <div className="form-group">
+                                    <input type="text" name="name" placeholder="Full Name" className="form-input" value={formData.name} onChange={handleChange} required />
+                                </div>
+                            )}
+                            <div className="form-group">
+                                <input type="email" name="email" placeholder="Email Address" className="form-input" value={formData.email} onChange={handleChange} required />
+                            </div>
+                            <div className="form-group">
+                                <input type="password" name="password" placeholder="Password" className="form-input" value={formData.password} onChange={handleChange} required />
+                            </div>
+                            {!isLogin && (
+                                <div className="form-group">
+                                    <input type="password" name="confirmPassword" placeholder="Confirm Password" className="form-input" value={formData.confirmPassword} onChange={handleChange} required />
+                                </div>
+                            )}
+                            <button type="submit" className="form-button" disabled={loading}>
+                                {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Create Account')}
+                            </button>
+                        </form>
+
+                        <div className="auth-switch">
+                            {isLogin ? "Don't have an account? " : "Already have an account? "}
+                            <span className="auth-link" onClick={() => setIsLogin(!isLogin)}>
+                                {isLogin ? 'Create Account' : 'Sign In'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Dashboard() {
+            const { user, logout } = useAuth();
+            const [healthData, setHealthData] = useState({
+                steps: 8547,
+                heartRate: 72,
+                bloodPressure: { systolic: 118, diastolic: 78 },
+                oxygenSat: 98,
+                temperature: 98.6,
+                weight: 68.5,
+                sleepHours: 7.5,
+                waterIntake: 6,
+                calories: { burned: 1847, consumed: 1500 },
+                healthScore: 87,
+                stressLevel: 3,
+                mood: 8,
+                energy: 7,
+                workoutMinutes: 45,
+                caloriesGoal: 2000,
+                lastUpdate: new Date().toLocaleTimeString()
+            });
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setHealthData(prev => {
+                        const newData = {
+                            ...prev,
+                            steps: Math.max(0, prev.steps + Math.floor(Math.random() * 15 - 5)),
+                            heartRate: Math.max(55, Math.min(120, prev.heartRate + Math.floor(Math.random() * 4 - 2))),
+                            bloodPressure: {
+                                systolic: Math.max(110, Math.min(135, prev.bloodPressure.systolic + Math.floor(Math.random() * 3 - 1))),
+                                diastolic: Math.max(70, Math.min(90, prev.bloodPressure.diastolic + Math.floor(Math.random() * 3 - 1)))
+                            },
+                            oxygenSat: Math.max(95, Math.min(100, prev.oxygenSat + Math.floor(Math.random() * 2 - 1))),
+                            temperature: Math.max(97.0, Math.min(99.2, prev.temperature + (Math.random() * 0.3 - 0.15))),
+                            weight: Math.max(65, Math.min(75, prev.weight + (Math.random() * 0.08 - 0.03))),
+                            waterIntake: Math.max(0, Math.min(12, prev.waterIntake + (Math.random() > 0.93 ? 1 : 0))),
+                            calories: {
+                                burned: Math.max(0, prev.calories.burned + Math.floor(Math.random() * 8)),
+                                consumed: prev.calories.consumed + (Math.random() > 0.97 ? Math.floor(Math.random() * 100) : 0)
+                            },
+                            stressLevel: Math.max(1, Math.min(10, prev.stressLevel + (Math.random() * 0.5 - 0.25))),
+                            mood: Math.max(1, Math.min(10, prev.mood + (Math.random() * 0.3 - 0.15))),
+                            energy: Math.max(1, Math.min(10, prev.energy + (Math.random() * 0.4 - 0.2))),
+                            workoutMinutes: prev.workoutMinutes + (Math.random() > 0.95 ? 5 : 0),
+                            lastUpdate: new Date().toLocaleTimeString()
+                        };
+                        
+                        newData.healthScore = Math.max(60, Math.min(100, Math.round(
+                            0.15 * (newData.steps / 10000 * 100) +
+                            0.10 * (100 - Math.abs(newData.heartRate - 72)) +
+                            0.10 * (100 - Math.abs(newData.bloodPressure.systolic - 120)) +
+                            0.08 * (100 - Math.abs(newData.bloodPressure.diastolic - 80)) +
+                            0.10 * (newData.oxygenSat) +
+                            0.08 * (100 - Math.abs(newData.temperature - 98.6) * 10) +
+                            0.07 * (100 - Math.abs(newData.weight - 68.5) * 2) +
+                            0.12 * (newData.sleepHours / 8 * 100) +
+                            0.10 * (newData.waterIntake / 8 * 100) +
+                            0.05 * (newData.mood * 10) +
+                            0.05 * (100 - newData.stressLevel * 10)
+                        )));
+                        
+                        return newData;
+                    });
+                }, 3000);
+                return () => clearInterval(interval);
+            }, []);
+
+            const showModal = (title, content) => {
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">${title}</h3>
+                            <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                        </div>
+                        <div class="modal-text">${content}</div>
+                    </div>
+                `;
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.remove();
+                });
+                document.body.appendChild(modal);
+            };
+
+            const getAnalytics = (metric) => {
+                switch(metric) {
+                    case 'Steps':
+                        return `🚶‍♂️ Current: ${healthData.steps.toLocaleString()} steps
+📊 Daily Goal: 10,000 steps  
+📈 Progress: ${(healthData.steps / 10000 * 100).toFixed(1)}%
+📏 Distance: ${(healthData.steps * 0.0008).toFixed(2)} km
+🔥 Calories Burned: ${Math.round(healthData.steps * 0.04)} cal
+✨ Status: ${healthData.steps >= 10000 ? '✅ Goal Achieved!' : '⏳ Keep Walking!'}
+
+💡 Recommendations:
+• Take stairs instead of elevators
+• Walk during phone calls
+• Park farther from destinations
+• Set hourly walking reminders`;
+
+                    case 'Heart Rate':
+                        const hrZone = healthData.heartRate < 60 ? 'Resting' : 
+                                      healthData.heartRate < 100 ? 'Normal' :
+                                      healthData.heartRate < 150 ? 'Elevated' : 'High';
+                        const hrColor = healthData.heartRate < 60 ? '🟦' : 
+                                       healthData.heartRate < 100 ? '🟢' :
+                                       healthData.heartRate < 150 ? '🟡' : '🔴';
+                        return `❤️ Current: ${healthData.heartRate} bpm
+${hrColor} Zone: ${hrZone}
+💤 Resting HR: 65 bpm
+⚡ Max HR: ~190 bpm
+📊 Variability: Normal
+🔄 Recovery: Good
+
+📈 Weekly Trend:
+• Average: 74 bpm
+• Lowest: 62 bpm (sleep)
+• Highest: 145 bpm (exercise)
+
+💡 Heart Health Tips:
+• Regular cardio exercise
+• Stress management techniques
+• Adequate sleep (7-9 hours)
+• Stay hydrated`;
+
+                    case 'Blood Pressure':
+                        const bpStatus = healthData.bloodPressure.systolic < 120 && healthData.bloodPressure.diastolic < 80 ? 'Optimal ✅' :
+                                        healthData.bloodPressure.systolic < 130 && healthData.bloodPressure.diastolic < 85 ? 'Normal 🟢' :
+                                        'High Normal 🟡';
+                        return `🩸 Current: ${healthData.bloodPressure.systolic}/${healthData.bloodPressure.diastolic} mmHg
+✨ Status: ${bpStatus}
+📊 Pulse Pressure: ${healthData.bloodPressure.systolic - healthData.bloodPressure.diastolic} mmHg
+🎯 MAP: ${Math.round((healthData.bloodPressure.systolic + 2 * healthData.bloodPressure.diastolic) / 3)} mmHg
+
+📊 Classification Guide:
+• Optimal: <120/80
+• Normal: 120-129/80-84
+• High Normal: 130-139/85-89
+• High: ≥140/90
+
+💡 BP Management:
+• Reduce sodium intake
+• Regular exercise routine
+• Maintain healthy weight
+• Limit alcohol consumption`;
+
+                    case 'Oxygen Saturation':
+                        const o2Status = healthData.oxygenSat >= 98 ? 'Excellent ✅' : 'Good 🟢';
+                        return `🫁 Current: ${healthData.oxygenSat}%
+✨ Status: ${o2Status}
+📊 Perfusion Index: Good
+🫁 Respiratory Rate: 16 breaths/min
+
+📊 Reference Ranges:
+• Excellent: 98-100%
+• Good: 95-97%
+• Low: 90-94%
+• Critical: <90%
+
+💡 Respiratory Health:
+• Deep breathing exercises
+• Regular cardio exercise
+• Avoid smoking environments
+• Ensure good air quality
+• Stay properly hydrated`;
+
+                    case 'Temperature':
+                        const tempStatus = healthData.temperature >= 97.0 && healthData.temperature <= 99.0 ? 'Normal ✅' : 'Elevated 🔴';
+                        const tempC = ((healthData.temperature - 32) * 5/9).toFixed(1);
+                        return `🌡️ Current: ${healthData.temperature.toFixed(1)}°F (${tempC}°C)
+✨ Status: ${tempStatus}
+🕐 Circadian Rhythm: Normal
+⚖️ Core vs Surface: Stable
+
+📊 Normal Ranges:
+• Oral: 97.0-99.0°F (36.1-37.2°C)
+• Rectal: 98.0-100.0°F
+• Axillary: 96.0-98.0°F
+
+🌡️ Factors Affecting Temperature:
+• Time of day (lowest 4-6 AM)
+• Physical activity level
+• Hydration status
+• Environmental conditions`;
+
+                    case 'Weight':
+                        const bmi = (healthData.weight / (1.75 * 1.75)).toFixed(1);
+                        const bmiStatus = bmi < 25 ? 'Normal ✅' : 'Overweight 🟡';
+                        return `⚖️ Current: ${healthData.weight.toFixed(1)} kg
+📊 BMI: ${bmi} (${bmiStatus})
+📈 Weekly Change: -0.2 kg
+📅 Monthly Change: -0.8 kg
+🎯 Target Weight: 68.0 kg
+
+📊 BMI Categories:
+• Underweight: <18.5
+• Normal: 18.5-24.9
+• Overweight: 25-29.9
+• Obese: ≥30
+
+💡 Weight Management:
+• Balanced nutrition plan
+• Regular exercise routine
+• Consistent meal timing
+• Adequate sleep schedule`;
+
+                    case 'Sleep':
+                        const sleepQuality = healthData.sleepHours >= 8 ? 'Excellent ✅' : 'Good 🟢';
+                        return `😴 Last Night: ${healthData.sleepHours} hours
+✨ Quality: ${sleepQuality}
+📊 Sleep Efficiency: ${Math.min(100, (healthData.sleepHours / 8 * 100)).toFixed(1)}%
+🔄 Deep Sleep: ${(healthData.sleepHours * 0.2).toFixed(1)} hours
+🌙 REM Sleep: ${(healthData.sleepHours * 0.25).toFixed(1)} hours
+💤 Light Sleep: ${(healthData.sleepHours * 0.55).toFixed(1)} hours
+
+🌙 Sleep Schedule:
+• Bedtime: 10:30 PM
+• Wake Time: 6:30 AM  
+• Sleep Latency: 12 minutes
+
+💡 Sleep Hygiene Tips:
+• Maintain consistent schedule
+• Keep room cool and dark
+• No screens 1 hour before bed
+• Limit caffeine after 2 PM`;
+
+                    case 'Hydration':
+                        const hydrationStatus = healthData.waterIntake >= 8 ? 'Excellent ✅' : 'Good 🟢';
+                        return `💧 Today: ${healthData.waterIntake} glasses (${(healthData.waterIntake * 0.25).toFixed(1)} L)
+🎯 Daily Goal: 8 glasses (2.0 L)
+📊 Progress: ${(healthData.waterIntake / 8 * 100).toFixed(1)}%
+✨ Status: ${hydrationStatus}
+💦 Hydration Rate: Good
+
+💧 Optimal Timeline:
+• Morning: 2 glasses (upon waking)
+• Pre-meals: 1 glass each meal
+• Exercise: Extra 1-2 glasses
+• Evening: 1 glass (not too late)
+
+💡 Hydration Tips:
+• Drink before feeling thirsty
+• Monitor urine color as guide
+• Increase intake with exercise
+• Add electrolytes when sweating`;
+
+                    case 'Daily Progress':
+                        const achievements = [];
+                        if (healthData.steps >= 10000) achievements.push('🚶‍♂️ Steps Goal Achieved');
+                        if (healthData.waterIntake >= 8) achievements.push('💧 Hydration Goal Met');
+                        if (healthData.sleepHours >= 8) achievements.push('😴 Sleep Goal Reached');
+                        
+                        return `📊 Health Score: ${healthData.healthScore}%
+✨ Overall Status: ${healthData.healthScore >= 85 ? 'Excellent ✅' : 'Good 🟢'}
+
+🏆 Today's Achievements:
+${achievements.length > 0 ? achievements.join('\n') : 'Keep working towards your goals!'}
+
+📈 Metrics Breakdown:
+• Steps Progress: ${(healthData.steps/10000*100).toFixed(0)}%
+• Hydration Level: ${(healthData.waterIntake/8*100).toFixed(0)}%
+• Sleep Quality: ${(healthData.sleepHours/8*100).toFixed(0)}%
+• Activity Level: ${Math.min(100, healthData.calories.burned/2000*100).toFixed(0)}%
+
+💡 Focus Areas:
+${healthData.steps < 10000 ? '• Increase daily steps\n' : ''}${healthData.waterIntake < 8 ? '• Drink more water\n' : ''}${healthData.sleepHours < 8 ? '• Improve sleep duration' : ''}`;
+
+                    default:
+                        return `📊 ${metric} Analytics
+
+Real-time monitoring active!
+Detailed insights and personalized recommendations available.`;
+                }
+            };
+
+            const handleCardClick = (metric) => {
+                showModal(`${metric} Analytics`, getAnalytics(metric));
+            };
+
+            return (
+                <div style={{ background: '#f5f5f5', minHeight: '100vh' }}>
+                    <div className="dashboard-container">
+                        <div className="header">
+                            <div>
+                                <h1>🏥 Health & Wellness Dashboard</h1>
+                                <p>Welcome back, {user?.name}! Real-time biometric monitoring</p>
+                            </div>
+                            <button className="logout-btn" onClick={logout}>Logout</button>
+                        </div>
+                        
+                        <div className="metrics-grid">
+                            <div className="metric-card" onClick={() => handleCardClick('Steps')}>
+                                <div className="metric-title">Steps <span className="real-time-indicator"></span></div>
+                                <div className="metric-value" style={{color: '#2196F3'}}>{healthData.steps.toLocaleString()}</div>
+                                <div className="metric-unit">Target: 10,000 steps</div>
+                                <div className="progress-bar">
+                                    <div className="progress-fill" style={{width: `${Math.min(100, healthData.steps / 10000 * 100)}%`}}></div>
+                                </div>
+                            </div>
+
+                            <div className="metric-card" onClick={() => handleCardClick('Heart Rate')}>
+                                <div className="metric-title">Heart Rate <span className="real-time-indicator"></span></div>
+                                <div className="metric-value" style={{color: '#f44336'}}>{healthData.heartRate}</div>
+                                <div className="metric-unit">bpm - Normal</div>
+                            </div>
+
+                            <div className="metric-card" onClick={() => handleCardClick('Blood Pressure')}>
+                                <div className="metric-title">Blood Pressure <span className="real-time-indicator"></span></div>
+                                <div className="metric-value" style={{color: '#9c27b0'}}>{healthData.bloodPressure.systolic}/{healthData.bloodPressure.diastolic}</div>
+                                <div className="metric-unit">mmHg - Optimal</div>
+                            </div>
+
+                            <div className="metric-card" onClick={() => handleCardClick('Oxygen Saturation')}>
+                                <div className="metric-title">Oxygen Saturation <span className="real-time-indicator"></span></div>
+                                <div className="metric-value" style={{color: '#00bcd4'}}>{healthData.oxygenSat}%</div>
+                                <div className="metric-unit">Excellent</div>
+                            </div>
+
+                            <div className="metric-card" onClick={() => handleCardClick('Temperature')}>
+                                <div className="metric-title">Temperature <span className="real-time-indicator"></span></div>
+                                <div className="metric-value" style={{color: '#ff9800'}}>{healthData.temperature.toFixed(1)}°F</div>
+                                <div className="metric-unit">Normal</div>
+                            </div>
+
+                            <div className="metric-card" onClick={() => handleCardClick('Weight')}>
+                                <div className="metric-title">Weight <span className="real-time-indicator"></span></div>
+                                <div className="metric-value" style={{color: '#4caf50'}}>{healthData.weight.toFixed(1)}</div>
+                                <div className="metric-unit">kg - Trend: -0.2kg</div>
+                            </div>
+
+                            <div className="metric-card" onClick={() => handleCardClick('Sleep')}>
+                                <div className="metric-title">Sleep</div>
+                                <div className="metric-value" style={{color: '#673ab7'}}>{healthData.sleepHours}</div>
+                                <div className="metric-unit">hours - Good quality</div>
+                                <div className="progress-bar">
+                                    <div className="progress-fill" style={{width: `${Math.min(100, healthData.sleepHours / 8 * 100)}%`}}></div>
+                                </div>
+                            </div>
+
+                            <div className="metric-card" onClick={() => handleCardClick('Hydration')}>
+                                <div className="metric-title">Hydration <span className="real-time-indicator"></span></div>
+                                <div className="metric-value" style={{color: '#03a9f4'}}>{healthData.waterIntake}</div>
+                                <div className="metric-unit">glasses - Target: 8</div>
+                                <div className="progress-bar">
+                                    <div className="progress-fill" style={{width: `${Math.min(100, healthData.waterIntake / 8 * 100)}%`}}></div>
+                                </div>
+                            </div>
+
+                            <div className="daily-progress-card" onClick={() => handleCardClick('Daily Progress')}>
+                                <div className="metric-title">📊 Daily Progress <span className="real-time-indicator"></span></div>
+                                <div className="metric-value">{healthData.healthScore}%</div>
+                                <div className="progress-bar">
+                                    <div className="progress-fill" style={{width: `${healthData.healthScore}%`, background: 'rgba(255,255,255,0.8)'}}></div>
+                                </div>
+                                <div style={{marginTop: '12px', fontSize: '14px'}}>
+                                    <div>Calories Burned: {healthData.calories.burned}</div>
+                                    <div>Overall Health: {healthData.healthScore >= 85 ? 'Excellent' : 'Good'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{
+                            position: 'fixed',
+                            bottom: '20px',
+                            right: '20px',
+                            background: 'white',
+                            padding: '10px 15px',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            fontSize: '12px',
+                            color: '#666'
+                        }}>
+                            🔄 Last update: {healthData.lastUpdate}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const { user } = useAuth();
+            return user ? <Dashboard /> : <LoginForm />;
+        }
+
+        function AppRoot() {
+            return (
+                <AuthProvider>
+                    <App />
+                </AuthProvider>
+            );
+        }
+
+        ReactDOM.render(<AppRoot />, document.getElementById('root'));
+    </script>
+</body>
+</html>
